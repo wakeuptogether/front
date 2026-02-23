@@ -1,0 +1,542 @@
+/* ===== Mission Base ===== */
+.mission {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  z-index: 1;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.mission__icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.mission__label {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: #fff;
+}
+
+.mission__desc {
+  font-size: var(--font-size-base);
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+
+.mission__hint {
+  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: var(--space-sm);
+}
+
+/* ===== Progress Ring ===== */
+.mission__progress-ring {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.mission__svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.mission__ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 6;
+}
+
+.mission__ring-fill {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.mission__progress-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.mission__progress-count {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.mission__progress-total {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== Shake ===== */
+.mission__shake-btn {
+  padding: 16px 40px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.mission__shake-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.mission__shake-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ===== Tap ===== */
+.mission__tap-area {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(90, 158, 255, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.mission__tap-area:active:not(:disabled) {
+  background: rgba(90, 158, 255, 0.3);
+}
+
+.mission__tap-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.mission__tap-count {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mission__tap-number {
+  font-size: var(--font-size-4xl);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.mission__tap-total {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== Type Gibberish ===== */
+.mission__gibberish-target {
+  display: flex;
+  gap: 6px;
+  margin: var(--space-md) 0;
+}
+
+.mission__gibberish-char {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 56px;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  transition: all var(--transition-fast);
+}
+
+.mission__gibberish-char--correct {
+  border-color: var(--color-success);
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--color-success-light);
+}
+
+.mission__gibberish-char--wrong {
+  border-color: #ef5350;
+  background: rgba(239, 83, 80, 0.2);
+  color: #ef9a9a;
+}
+
+.mission__type-input {
+  width: 100%;
+  max-width: 300px;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: var(--font-size-lg);
+  text-align: center;
+  letter-spacing: 4px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.mission__type-input:focus {
+  border-color: var(--color-primary);
+}
+
+.mission__type-input:disabled {
+  opacity: 0.6;
+}
+
+/* ===== Math ===== */
+.mission__math-problem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  margin: var(--space-md) 0;
+}
+
+.mission__math-expression {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.mission__math-eq {
+  font-size: var(--font-size-2xl);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.mission__math-q {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--color-primary-light);
+}
+
+.mission__math-form {
+  display: flex;
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: 280px;
+}
+
+.mission__math-input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: var(--font-size-lg);
+  text-align: center;
+  outline: none;
+  appearance: textfield;
+  -moz-appearance: textfield;
+  transition: border-color var(--transition-fast);
+}
+
+.mission__math-input::-webkit-inner-spin-button,
+.mission__math-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.mission__math-input:focus {
+  border-color: var(--color-primary);
+}
+
+.mission__math-input--wrong {
+  border-color: #ef5350;
+  animation: shake-input 0.4s ease;
+}
+
+.mission__math-submit {
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--font-size-base);
+  border: none;
+  cursor: pointer;
+}
+
+.mission__math-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ===== Pattern ===== */
+.mission__pattern-progress {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.mission__pattern-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 240px;
+  height: 240px;
+  margin: var(--space-md) 0;
+}
+
+.mission__pattern-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mission__pattern-cell:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.mission__pattern-cell--highlight {
+  background: rgba(90, 158, 255, 0.8) !important;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 20px rgba(90, 158, 255, 0.5);
+}
+
+.mission__pattern-cell--done {
+  background: rgba(76, 175, 80, 0.3);
+  border-color: var(--color-success);
+}
+
+.mission__pattern-cell:disabled {
+  cursor: default;
+}
+
+/* ===== Complete Badge ===== */
+.mission__complete-badge {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-success-light);
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(76, 175, 80, 0.15);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+/* ===== Wrong Message ===== */
+.mission__wrong-msg {
+  color: #ef9a9a;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+/* ===== Group Status ===== */
+.group-status {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+  z-index: 1;
+}
+
+.group-status__timer {
+  margin-bottom: var(--space-lg);
+}
+
+.group-status__timer-bar {
+  width: 100%;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  margin-bottom: var(--space-sm);
+}
+
+.group-status__timer-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  transition: background var(--transition-fast);
+}
+
+.group-status__timer--urgent .group-status__timer-fill {
+  background: #ef5350;
+}
+
+.group-status__timer-text {
+  display: block;
+  text-align: center;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.group-status__timer--urgent .group-status__timer-text {
+  color: #ef9a9a;
+}
+
+.group-status__title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.group-status__members {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.group-status__member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all var(--transition-fast);
+}
+
+.group-status__member--done {
+  background: rgba(76, 175, 80, 0.1);
+  border-color: rgba(76, 175, 80, 0.2);
+}
+
+.group-status__member-name {
+  flex: 1;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: #fff;
+}
+
+.group-status__check {
+  font-size: var(--font-size-lg);
+}
+
+.group-status__pending {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ===== Timeout Message ===== */
+.timeout-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  z-index: 1;
+  text-align: center;
+}
+
+.timeout-message__icon {
+  font-size: 4rem;
+}
+
+.timeout-message__title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: #fff;
+}
+
+.timeout-message__detail {
+  font-size: var(--font-size-base);
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 300px;
+  line-height: 1.6;
+}
+
+.timeout-message__sent-list {
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.timeout-message__sent-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: rgba(239, 83, 80, 0.12);
+  border: 1px solid rgba(239, 83, 80, 0.2);
+}
+
+.timeout-message__sent-name {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: #fff;
+}
+
+.timeout-message__sent-badge {
+  font-size: var(--font-size-xs);
+  color: #ef9a9a;
+  padding: 4px 8px;
+  background: rgba(239, 83, 80, 0.15);
+  border-radius: var(--radius-sm);
+}
+
+.timeout-message__no-send {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+}
+
+/* ===== Animations ===== */
+@keyframes shake-input {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+@media (max-width: 480px) {
+  .mission__gibberish-char {
+    width: 42px;
+    height: 48px;
+    font-size: var(--font-size-xl);
+  }
+
+  .mission__pattern-grid {
+    width: 200px;
+    height: 200px;
+  }
+
+  .mission__tap-area {
+    width: 170px;
+    height: 170px;
+  }
+}

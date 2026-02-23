@@ -1,0 +1,113 @@
+.signup-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  background-color: var(--color-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.signup-page__bg {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(90, 158, 255, 0.08) 0%, transparent 70%);
+  animation: pulse-bg 10s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.signup-page__content {
+  width: 100%;
+  max-width: 400px;
+  background: var(--color-bg-card);
+  padding: 40px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  z-index: 1;
+}
+
+.signup-page__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.signup-page__title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.signup-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.signup-page__email-group {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-xs);
+}
+
+.signup-page__email-group > *:first-child {
+  flex: 1;
+}
+
+.signup-page__verify-btn {
+  height: 52px; /* Input height match */
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.signup-page__code-section {
+  position: relative;
+}
+
+.signup-page__timer {
+  position: absolute;
+  right: 16px;
+  top: 38px; /* Adjust based on label height */
+  font-size: var(--font-size-sm);
+  color: #ef5350;
+  font-feature-settings: "tnum";
+}
+
+.signup-page__login-link {
+  margin-top: var(--space-xl);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.signup-page__login-link button {
+  color: var(--color-primary);
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.signup-page__login-link button:hover {
+  text-decoration: underline;
+}
+
+@keyframes pulse-bg {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.1); opacity: 0.8; }
+}
+
+@media (max-width: 480px) {
+  .signup-page__content {
+    padding: 24px;
+    box-shadow: none;
+    background: transparent;
+    border: none;
+  }
+}

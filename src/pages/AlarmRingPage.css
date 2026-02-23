@@ -1,0 +1,138 @@
+.alarm-ring {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #0a1628 0%, #1a1d27 50%, #0f1117 100%);
+  z-index: var(--z-alarm);
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+.alarm-ring--not-found {
+  color: #fff;
+  font-size: var(--font-size-lg);
+}
+
+/* Pulse rings */
+.alarm-ring__pulses {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.alarm-ring__pulse {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid rgba(90, 158, 255, 0.3);
+  top: -60px;
+  left: -60px;
+}
+
+/* Content */
+.alarm-ring__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  text-align: center;
+  padding: var(--space-lg);
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.alarm-ring__time {
+  font-size: 5rem;
+  font-weight: 200;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+@media (max-width: 480px) {
+  .alarm-ring__time {
+    font-size: 3.5rem;
+  }
+}
+
+.alarm-ring__group-label {
+  font-size: var(--font-size-lg);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.alarm-ring__group-label strong {
+  color: var(--color-primary-light);
+  font-weight: 700;
+}
+
+/* Mini timer */
+.alarm-ring__mini-timer {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+}
+
+/* Waiting header */
+.alarm-ring__waiting-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.alarm-ring__waiting-icon {
+  font-size: 3rem;
+}
+
+.alarm-ring__waiting-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: #fff;
+}
+
+.alarm-ring__waiting-sub {
+  font-size: var(--font-size-base);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Done */
+.alarm-ring__done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  color: #fff;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  z-index: 1;
+}
+
+.alarm-ring__done-icon {
+  font-size: 4rem;
+}
+
+.alarm-ring__done-btn {
+  padding: 16px 48px;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-glow-primary);
+  margin-top: var(--space-md);
+}

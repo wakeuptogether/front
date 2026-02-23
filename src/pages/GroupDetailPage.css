@@ -1,0 +1,203 @@
+.group-detail {
+  min-height: 100dvh;
+  padding: var(--space-lg);
+  padding-bottom: 100px;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.group-detail--not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+/* Header */
+.group-detail__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding-top: var(--space-md);
+}
+
+.group-detail__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-input);
+  color: var(--color-text);
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition-fast);
+}
+
+.group-detail__back:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.group-detail__header-info {
+  flex: 1;
+}
+
+.group-detail__name {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+}
+
+.group-detail__member-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.group-detail__invite {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition-fast);
+}
+
+.group-detail__invite--copied {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+/* Members */
+.group-detail__members {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  padding: var(--space-md) 0;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.group-detail__members::-webkit-scrollbar {
+  display: none;
+}
+
+.group-detail__member {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.group-detail__member-name {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* Section title */
+.group-detail__section-title {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+/* Alarm cards */
+.group-detail__alarms {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.group-detail__alarm-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg) !important;
+}
+
+.group-detail__alarm-time {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  min-width: 70px;
+}
+
+.group-detail__alarm-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.group-detail__alarm-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
+
+.group-detail__alarm-repeat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.group-detail__alarm-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.group-detail__check {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.group-detail__check:hover:not(:disabled) {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.group-detail__check--done {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+
+.group-detail__check--done:disabled {
+  opacity: 1;
+}
+
+/* Add button */
+.group-detail__add {
+  margin-top: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .group-detail {
+    padding-bottom: var(--space-xl);
+  }
+}

@@ -1,0 +1,166 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, Mail, Lock, Check } from 'lucide-react';
+import Logo from '../components/Logo';
+import Input from '../components/Input';
+import Button from '../components/Button';
+import './SignupPage.css';
+
+export default function SignupPage() {
+  const navigate = useNavigate();
+  
+  // Form State
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [verifyCode, setVerifyCode] = useState('');
+
+  // Flow State
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [timer, setTimer] = useState(180); // 3분 타이머
+
+  // 이메일 인증코드 요청 (모의)
+  const handleRequestCode = async () => {
+    if (!email) return alert('이메일을 입력해주세요.');
+    
+    // Simulate API call: POST /api/auth/send-code
+    setIsCodeSent(true);
+    setTimer(180);
+    
+    // Timer logic
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    alert(`인증코드가 ${email}로 발송되었습니다. (테스트용: 123456)`);
+  };
+
+  // 회원가입 완료 (모의)
+  const handleSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !password || !verifyCode) return;
+
+    if (verifyCode !== '123456') {
+      return alert('인증코드가 올바르지 않습니다.');
+    }
+
+    // Simulate API call: POST /api/auth/signup
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('userName', name);
+    alert('회원가입이 완료되었습니다!');
+    navigate('/dashboard');
+  };
+
+  const minutes = Math.floor(timer / 60);
+  const seconds = timer % 60;
+
+  return (
+    <div className="signup-page">
+      <div className="signup-page__bg" />
+
+      <motion.div
+        className="signup-page__content"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
+        <div className="signup-page__header">
+          <Logo size={48} />
+          <h1 className="signup-page__title">회원가입</h1>
+        </div>
+
+        <form className="signup-page__form" onSubmit={handleSignup}>
+          {/* 1. 이름 */}
+          <Input
+            id="name"
+            label="이름"
+            placeholder="홍길동"
+            icon={<User size={18} />}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+
+          {/* 2. 이메일 & 인증요청 */}
+          <div className="signup-page__email-group">
+            <Input
+              id="email"
+              type="email"
+              label="이메일"
+              placeholder="example@email.com"
+              icon={<Mail size={18} />}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isCodeSent}
+            />
+            <Button
+              type="button"
+              size="sm"
+              className="signup-page__verify-btn"
+              onClick={handleRequestCode}
+              disabled={isCodeSent || !email}
+            >
+              {isCodeSent ? '전송됨' : '인증요청'}
+            </Button>
+          </div>
+
+          {/* 3. 인증번호 입력 (조건부 렌더링) */}
+          <AnimatePresence>
+            {isCodeSent && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="signup-page__code-section"
+              >
+                <Input
+                  id="code"
+                  label="인증번호"
+                  placeholder="6자리 코드 입력"
+                  icon={<Check size={18} />}
+                  value={verifyCode}
+                  onChange={(e) => setVerifyCode(e.target.value)}
+                  maxLength={6}
+                />
+                <span className="signup-page__timer">
+                  {minutes}:{String(seconds).padStart(2, '0')}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* 4. 비밀번호 */}
+          <Input
+            id="password"
+            type="password"
+            label="비밀번호"
+            placeholder="8자 이상 입력하세요"
+            icon={<Lock size={18} />}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <Button 
+            type="submit" 
+            fullWidth 
+            size="lg" 
+            disabled={!isCodeSent || !verifyCode || !name || !email || !password}
+          >
+            가입하기
+          </Button>
+        </form>
+
+        <p className="signup-page__login-link">
+          이미 계정이 있으신가요?{' '}
+          <button onClick={() => navigate('/')}>로그인</button>
+        </p>
+      </motion.div>
+    </div>
+  );
+}
