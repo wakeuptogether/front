@@ -1,6 +1,18 @@
 {
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://backend-ynng.onrender.com/api/$1"
+    },
+    {
+      "source": "/voices/(.*)",
+      "destination": "https://backend-ynng.onrender.com/voices/$1"
+    },
+    {
+      "source": "/ws/(.*)",
+      "destination": "https://backend-ynng.onrender.com/ws/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
