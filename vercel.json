@@ -15,7 +15,7 @@
       "destination": "https://backend-ynng.onrender.com/ws/:path*"
     },
     {
-      "source": "/((?!api|voices|ws).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
