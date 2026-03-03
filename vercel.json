@@ -1,23 +1,5 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" }
-      ]
-    }
-  ],
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://backend-ynng.onrender.com/api/:path*"
-    },
-    {
-      "source": "/voices/:path*",
-      "destination": "https://backend-ynng.onrender.com/voices/:path*"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
