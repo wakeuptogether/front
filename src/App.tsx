@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import GroupDetailPage from './pages/GroupDetailPage';
@@ -10,6 +11,17 @@ import SignupPage from './pages/SignupPage';
 import AlarmMonitor from './components/AlarmMonitor';
 
 function App() {
+
+  useEffect(() => {
+    const ping = () => {
+      fetch('https://backend-ynng.onrender.com/api/time/current')
+        .catch(() => {});
+    };
+    ping(); // 앱 시작하자마자 한 번 깨우기
+    const interval = setInterval(ping, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="app">
       <AlarmMonitor />
