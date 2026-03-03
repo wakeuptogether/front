@@ -11,7 +11,7 @@ import type {
 
 // ─── 기본 설정 ───
 
-const BASE_URL = '/api';
+const BASE_URL = 'https://backend-ynng.onrender.com/api';
 
 function getToken(): string | null {
   return localStorage.getItem('token');
