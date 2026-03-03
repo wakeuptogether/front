@@ -1,27 +1,37 @@
 .time-picker {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-lg) 0;
-}
-
-.time-picker__col {
-  display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-md);
+  padding: var(--space-xl) 0;
 }
 
-.time-picker__col-label {
+.time-picker__labels {
+  display: flex;
+  width: 100%;
+  max-width: 180px;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.time-picker__label {
+  flex: 1;
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   font-weight: 600;
-  text-transform: uppercase;
+  text-align: center;
+}
+
+.time-picker__wheels {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  position: relative;
 }
 
 .time-picker__wheel {
-  height: 168px; /* 3 items visible */
+  height: 168px; /* 3 items (56 * 3) */
   width: 80px;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
@@ -31,15 +41,15 @@
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    black 35%,
-    black 65%,
+    black 40%,
+    black 60%,
     transparent 100%
   );
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    black 35%,
-    black 65%,
+    black 40%,
+    black 60%,
     transparent 100%
   );
 }
@@ -52,24 +62,31 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-3xl);
-  font-weight: 300;
+  font-size: 32px;
+  font-weight: 400;
   color: var(--color-text-tertiary);
   scroll-snap-align: center;
   cursor: pointer;
   transition: all var(--transition-fast);
   user-select: none;
+  opacity: 0.3;
 }
 
 .time-picker__item--active {
   font-weight: 700;
   color: var(--color-text);
   transform: scale(1.1);
+  opacity: 1;
 }
 
 .time-picker__sep {
-  font-size: var(--font-size-4xl);
-  font-weight: 300;
-  color: var(--color-text-tertiary);
-  margin-top: 20px;
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--color-text);
+  margin-top: -2px;
+  opacity: 0.8;
+}
+
+.time-picker__spacer {
+  flex-shrink: 0;
 }

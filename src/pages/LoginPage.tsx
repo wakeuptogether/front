@@ -5,22 +5,35 @@ import { Mail, Lock, LogIn } from 'lucide-react';
 import Logo from '../components/Logo';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import { authApi } from '../services/api';
 import './LoginPage.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('isLoggedIn', 'true');
-    navigate('/dashboard');
-  };
+    if (!email || !password) return;
+    setError('');
+    setIsLoading(true);
 
-  const handleGoogleLogin = () => {
-    localStorage.setItem('isLoggedIn', 'true');
-    navigate('/dashboard');
+    try {
+      const response = await authApi.login(email, password);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('userId', String(response.userId));
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userName', response.name);
+      localStorage.setItem('email', response.email);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '로그인에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -37,6 +50,25 @@ export default function LoginPage() {
           <Logo size={64} />
           <p className="login-page__slogan">친구·가족과 함께 일어나요</p>
         </div>
+
+        {error && (
+          <motion.div
+            className="login-page__error"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              color: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.08)',
+              padding: '10px 16px',
+              borderRadius: '12px',
+              fontSize: '0.875rem',
+              marginBottom: '8px',
+              textAlign: 'center',
+            }}
+          >
+            {error}
+          </motion.div>
+        )}
 
         <form className="login-page__form" onSubmit={handleLogin}>
           <Input
@@ -57,8 +89,13 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Button type="submit" fullWidth icon={<LogIn size={18} />}>
-            로그인
+          <Button
+            type="submit"
+            fullWidth
+            icon={<LogIn size={18} />}
+            disabled={isLoading || !email || !password}
+          >
+            {isLoading ? '로그인 중...' : '로그인'}
           </Button>
         </form>
 
@@ -66,7 +103,9 @@ export default function LoginPage() {
           <span>또는</span>
         </div>
 
-        <button className="login-page__google" onClick={handleGoogleLogin}>
+        <button className="login-page__google" onClick={() => {
+          alert('구글 로그인은 준비 중입니다. 이메일 로그인을 이용해주세요.');
+        }}>
           <svg width="20" height="20" viewBox="0 0 24 24">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"

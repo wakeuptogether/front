@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function GroupMissionStatus({ members, timeoutSeconds, maxSeconds }: Props) {
-  const allDone = members.every((m) => m.completed);
+  const allDone = members.length > 0 && members.every((m) => m.completed);
   const minutes = Math.floor(timeoutSeconds / 60);
   const seconds = timeoutSeconds % 60;
   const timePercent = (timeoutSeconds / maxSeconds) * 100;
@@ -46,8 +46,8 @@ export default function GroupMissionStatus({ members, timeoutSeconds, maxSeconds
             }`}
             layout
           >
-            <Avatar name={member.userName} size="sm" />
-            <span className="group-status__member-name">{member.userName}</span>
+            <Avatar name={member.name} size="sm" />
+            <span className="group-status__member-name">{member.name}</span>
             <div className="group-status__member-status">
               {member.completed ? (
                 <motion.span
@@ -60,7 +60,7 @@ export default function GroupMissionStatus({ members, timeoutSeconds, maxSeconds
                 </motion.span>
               ) : (
                 <span className="group-status__pending">
-                  {member.progress > 0 ? '수행 중...' : '대기 중'}
+                  대기 중
                 </span>
               )}
             </div>

@@ -7,10 +7,12 @@ import AlarmRingPage from './pages/AlarmRingPage';
 import './App.css';
 
 import SignupPage from './pages/SignupPage';
+import AlarmMonitor from './components/AlarmMonitor';
 
 function App() {
   return (
     <div className="app">
+      <AlarmMonitor />
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />

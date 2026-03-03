@@ -196,8 +196,28 @@
   margin-top: var(--space-md);
 }
 
-@media (min-width: 768px) {
-  .group-detail {
+.group-detail {
     padding-bottom: var(--space-xl);
-  }
 }
+
+.group-detail__admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+}
+
+.group-detail__delete-btn {
+  order: 2;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.group-detail__delete-btn:hover {
+  opacity: 1;
+}
+
+.group-detail__add {
+  order: 1;
+}
+

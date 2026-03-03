@@ -15,7 +15,7 @@ export default function AvatarGroup({ users, max = 4, size = 'md' }: AvatarGroup
   return (
     <div className="avatar-group">
       {visible.map((user) => (
-        <Avatar key={user.id} name={user.name} src={user.avatarUrl} size={size} />
+        <Avatar key={user.id} name={user.name} size={size} />
       ))}
       {overflow > 0 && (
         <div className={`avatar-group__overflow avatar avatar--${size}`}>

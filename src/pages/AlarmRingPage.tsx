@@ -1,12 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { alarms, groups, formatTime } from '../data/mockData';
-import { generateRandomMission } from '../missions/missionEngine';
 import { useMission } from '../missions/useMission';
 import MissionRenderer from '../components/missions/MissionRenderer';
 import GroupMissionStatus from '../components/missions/GroupMissionStatus';
-import type { MemberMissionStatus } from '../types';
+import { groupApi, missionApi, penaltyApi } from '../services/api';
+import { AlarmWebSocket } from '../services/websocket';
+import type { Group, MemberMissionStatus, PenaltyVoiceMessage, ServerMission } from '../types';
 import './AlarmRingPage.css';
 
 const TIMEOUT_SECONDS = 300; // 5분
@@ -14,44 +14,162 @@ const TIMEOUT_SECONDS = 300; // 5분
 type Phase = 'mission' | 'waiting' | 'done' | 'timeout';
 
 export default function AlarmRingPage() {
-  const { alarmId } = useParams<{ alarmId: string }>();
+  const { alarmId: alarmIdStr } = useParams<{ alarmId: string }>();
+  const alarmId = parseInt(alarmIdStr || '0', 10);
   const navigate = useNavigate();
-  const alarm = alarms.find((a) => a.id === alarmId);
-  const group = alarm ? groups.find((g) => g.id === alarm.groupId) : null;
 
-  // 내 미션 (랜덤 생성, 마운트 시 1번만)
-  const myMission = useMemo(() => generateRandomMission(), []);
-  const [missionState, missionActions] = useMission(myMission);
+  const [group, setGroup] = useState<Group | null>(null);
+  const [serverMission, setServerMission] = useState<ServerMission | null>(null);
+
+  // 내 미션을 로컬 interface Mission에 맞게 변환
+  const localMission = useMemo(() => {
+    if (!serverMission) return null;
+
+    let answer: number | undefined = undefined;
+    if (serverMission.type === 'MATH') {
+      try {
+        // "10 + 20" -> 30, "10 - 5" -> 5, "10 * 5" -> 50, "10 x 5" -> 50
+        const normalizedPayload = serverMission.payload.replace(/[×x]/g, '*');
+        const parts = normalizedPayload.split(' ');
+        if (parts.length === 3) {
+          const a = parseInt(parts[0], 10);
+          const op = parts[1];
+          const b = parseInt(parts[2], 10);
+          if (op === '+') answer = a + b;
+          else if (op === '-') answer = a - b;
+          else if (op === '*' || op === '×') answer = a * b;
+        }
+      } catch (e) {
+        console.error('Math parse error:', e);
+      }
+    }
+
+    return {
+      type: serverMission.type,
+      label: serverMission.label,
+      description: serverMission.description,
+      targetValue: serverMission.targetValue,
+      payload: serverMission.payload,
+      answer: answer,
+      patternSequence: serverMission.patternSequence,
+    };
+  }, [serverMission]);
+
+  // useMission 훅은 serverMission이 로드된 후에만 의미 있는 상태를 가짐
+  // 미션이 없으면 기본 TAP 미션으로 placeholder 처리 (hooks 규정상 조건부 호출 불가)
+  const defaultMission = {
+    type: 'TAP' as const,
+    label: '미션 준비 중',
+    description: '미션 데이터를 불러오고 있습니다.',
+    targetValue: 1,
+  };
+
+  const [missionState, missionActions] = useMission(localMission || defaultMission);
 
   const [phase, setPhase] = useState<Phase>('mission');
   const [timeLeft, setTimeLeft] = useState(TIMEOUT_SECONDS);
 
-  // 그룹 멤버 미션 상태 (시뮬레이션)
-  const [memberStatuses, setMemberStatuses] = useState<MemberMissionStatus[]>(() => {
-    if (!group) return [];
-    return group.members.map((member) => ({
-      userId: member.id,
-      userName: member.name,
-      mission: generateRandomMission(),
-      progress: 0,
-      completed: member.id === 'u1', // 나(u1)는 시작 시 미완료, 아래 effect에서 업데이트
-    }));
-  });
+  // 벌칙 관련 상태
+  const [penaltyPhrase, setPenaltyPhrase] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadComplete, setUploadComplete] = useState(false);
+  const [receivedVoices, setReceivedVoices] = useState<PenaltyVoiceMessage[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
-  // 내 미션 완료 시 → waiting 단계로
+  // WebSocket 및 데이터 로딩
+  const wsRef = useRef<AlarmWebSocket | null>(null);
+  const [memberStatuses, setMemberStatuses] = useState<MemberMissionStatus[]>([]);
+
+  // 초기 데이터 로딩
+  useEffect(() => {
+    if (!alarmId) return;
+
+    const loadData = async () => {
+      try {
+        // 알람 정보 먼저 가져오기 (원래는 알람 ID로 그룹 ID를 알아야 하지만, 명세상 /api/groups/{id}는 그룹 ID 필요)
+        // 여기서는 alarmId로 미션을 먼저 가져오고, 그룹 정보는 임시로 처리하거나 백엔드 구조에 따라 조정
+        const mission = await missionApi.get(alarmId);
+        setServerMission(mission);
+
+        // 알람 상세 정보 fetch (가정: 알람 정보에 groupId가 포함되어 있거나, 다른 방식으로 그룹 식별)
+        // 현재 Alarm 타입에는 groupId가 없으므로, 그룹 정보를 가져오는 로직은 프로젝트 구조에 따라 다를 수 있음
+        // 여기선 groupId가 1이라고 가정하거나, 다른 API가 필요함.
+        // 일단 그룹 목록에서 이 알람이 속한 그룹을 찾거나 하는 로직이 필요할 수 있음.
+        const groups = await groupApi.getAll();
+        // 실제로는 알람 상세 API가 groupId를 주거나 해야 함. 
+        // 일단 첫 번째 그룹을 사용하거나 목업 처리 (실제 연동 시 수정 필요)
+        if (groups.length > 0) {
+          setGroup(groups[0]);
+        }
+      } catch (err) {
+        console.error('데이터 로딩 실패:', err);
+      }
+    };
+
+    loadData();
+  }, [alarmId]);
+
+  // WebSocket 연결 및 구독
+  useEffect(() => {
+    if (!group) return;
+
+    const ws = new AlarmWebSocket(group.id);
+    wsRef.current = ws;
+    ws.connect();
+
+    // 음성 업로드 알림 수신
+    const unsubVoice = ws.on('penalty-voice', (data) => {
+      setReceivedVoices((prev) => [...prev, data]);
+      
+      // 자동 재생 로직 추가
+      const audio = new Audio(data.voiceUrl.startsWith('http') ? data.voiceUrl : `http://localhost:8080${data.voiceUrl}`);
+      audio.play().catch(e => console.warn('음성 자동 재생 실패:', e));
+    });
+
+    // 벌칙 시작 알림 수신 (필요 시)
+    const unsubStart = ws.on('penalty-start', (data) => {
+      console.log('벌칙 시작 알림:', data);
+    });
+
+    return () => {
+      unsubVoice();
+      unsubStart();
+      ws.disconnect();
+    };
+  }, [group]);
+
+  // 주기적으로 멤버 미션 상태 확인
+  useEffect(() => {
+    if (!alarmId || phase === 'done') return;
+
+    const fetchStatus = async () => {
+      try {
+        const statuses = await missionApi.getStatus(alarmId);
+        setMemberStatuses(statuses);
+        
+        if (statuses.length > 0 && statuses.every(s => s.completed)) {
+          setPhase('done');
+        }
+      } catch (err) {
+        console.error('상태 확인 실패:', err);
+      }
+    };
+
+    const interval = setInterval(fetchStatus, 3000);
+    return () => clearInterval(interval);
+  }, [alarmId, phase]);
+
+  // 내 미션 완료 시 서버에 보고
   useEffect(() => {
     if (missionState.isComplete && phase === 'mission') {
-      setPhase('waiting');
-      // 내 상태 업데이트
-      setMemberStatuses((prev) =>
-        prev.map((m) =>
-          m.userId === 'u1'
-            ? { ...m, completed: true, completedAt: new Date().toISOString(), progress: myMission.targetValue }
-            : m
-        )
-      );
+      missionApi.complete(alarmId)
+        .then(() => setPhase('waiting'))
+        .catch(err => console.error('미션 완료 보고 실패:', err));
     }
-  }, [missionState.isComplete, phase, myMission.targetValue]);
+  }, [missionState.isComplete, phase, alarmId]);
 
   // 카운트다운 타이머
   useEffect(() => {
@@ -68,68 +186,19 @@ export default function AlarmRingPage() {
     return () => clearInterval(interval);
   }, [phase]);
 
-  // 타임아웃 처리
+  // 타임아웃 처리 → 벌칙 문구 가져오기
   useEffect(() => {
     if (timeLeft === 0 && phase !== 'done') {
       setPhase('timeout');
+      if (alarmId) {
+        penaltyApi.getPhrase(alarmId)
+          .then((res) => setPenaltyPhrase(res.phrase))
+          .catch(() => setPenaltyPhrase('일어나세요! 벌칙이에요! 🔔'));
+      }
     }
-  }, [timeLeft, phase]);
+  }, [timeLeft, phase, alarmId]);
 
-  // 시뮬레이션: 다른 멤버들이 점점 완료하는 효과
-  useEffect(() => {
-    if (phase !== 'waiting') return;
-
-    const otherMembers = group?.members.filter((m) => m.id !== 'u1') ?? [];
-    let completedCount = 0;
-
-    const completeNext = () => {
-      if (completedCount >= otherMembers.length) return;
-      const member = otherMembers[completedCount];
-      completedCount++;
-
-      setMemberStatuses((prev) => {
-        const updated = prev.map((m) =>
-          m.userId === member.id
-            ? { ...m, completed: true, completedAt: new Date().toISOString(), progress: m.mission.targetValue }
-            : m
-        );
-
-        // 전원 완료 체크
-        if (updated.every((m) => m.completed)) {
-          setTimeout(() => setPhase('done'), 600);
-        }
-        return updated;
-      });
-    };
-
-    // 랜덤 간격으로 완료 시뮬레이션 (3~8초)
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    otherMembers.forEach((_, i) => {
-      const delay = (i + 1) * (3000 + Math.random() * 5000);
-      timers.push(setTimeout(completeNext, delay));
-    });
-
-    return () => timers.forEach(clearTimeout);
-  }, [phase, group]);
-
-  // 시뮬레이션: 진행 중 멤버 progress 업데이트
-  useEffect(() => {
-    if (phase !== 'waiting') return;
-
-    const interval = setInterval(() => {
-      setMemberStatuses((prev) =>
-        prev.map((m) => {
-          if (m.completed || m.userId === 'u1') return m;
-          const increment = Math.floor(Math.random() * 5) + 1;
-          return { ...m, progress: Math.min(m.progress + increment, m.mission.targetValue - 1) };
-        })
-      );
-    }, 1500);
-
-    return () => clearInterval(interval);
-  }, [phase]);
-
-  // Beep sound
+  // Beep sound (알람 소리)
   useEffect(() => {
     if (phase === 'done' || phase === 'timeout') return;
 
@@ -161,18 +230,66 @@ export default function AlarmRingPage() {
     };
   }, [phase]);
 
-  if (!alarm || !group) {
+  // ─── 음성 녹음 관련 ───
+
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setRecordedBlob(blob);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error('마이크 접근 실패:', err);
+      alert('마이크 권한이 필요합니다.');
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  }, []);
+
+  const uploadVoice = useCallback(async () => {
+    if (!recordedBlob || !alarmId) return;
+    setIsUploading(true);
+    try {
+      const file = new File([recordedBlob], 'penalty-voice.webm', { type: 'audio/webm' });
+      await penaltyApi.uploadVoice(alarmId, file);
+      setUploadComplete(true);
+    } catch (err) {
+      console.error('음성 업로드 실패:', err);
+      alert('음성 업로드에 실패했습니다.');
+    } finally {
+      setIsUploading(false);
+    }
+  }, [recordedBlob, alarmId]);
+
+  if (!alarmId) {
     return (
       <div className="alarm-ring alarm-ring--not-found">
-        <p>알람을 찾을 수 없습니다.</p>
+        <p>알람 정보를 찾을 수 없습니다.</p>
       </div>
     );
   }
 
-  // 타임아웃 시 메시지 보낼 대상: 진행도 0%인 사람만 (미션 수행 시도한 사람 제외)
-  const timeoutTargets = memberStatuses.filter(
-    (m) => !m.completed && m.progress === 0
-  );
+  const timeoutTargets = memberStatuses.filter((m) => !m.completed);
 
   return (
     <div className="alarm-ring">
@@ -206,20 +323,23 @@ export default function AlarmRingPage() {
               animate={{ scale: [1, 1.02, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
-              {formatTime(alarm.hour, alarm.minute)}
+              🔔 알람 울림
             </motion.div>
 
             <div className="alarm-ring__group-label">
-              그룹 <strong>{group.name}</strong>에서 깨우는 중!
+              그룹 <strong>{group?.name || '...'}</strong>에서 깨우는 중!
             </div>
 
-            <MissionRenderer
-              mission={myMission}
-              state={missionState}
-              actions={missionActions}
-            />
+            {localMission ? (
+              <MissionRenderer
+                mission={localMission}
+                state={missionState}
+                actions={missionActions}
+              />
+            ) : (
+              <div className="alarm-ring__loading-mission">미션을 불러오는 중...</div>
+            )}
 
-            {/* 하단 타이머 미니 표시 */}
             <div className="alarm-ring__mini-timer">
               ⏰ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
             </div>
@@ -286,44 +406,157 @@ export default function AlarmRingPage() {
           </motion.div>
         )}
 
-        {/* Phase 4: 타임아웃 */}
+        {/* Phase 4: 타임아웃 — 벌칙 (WebSocket + 음성) */}
         {phase === 'timeout' && (
           <motion.div
-            className="timeout-message"
+            className="timeout-penalty"
             key="timeout"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="timeout-message__icon">⏰</div>
-            <h2 className="timeout-message__title">5분이 지났어요!</h2>
+            <div className="timeout-penalty__icon">⏰</div>
+            <h2 className="timeout-penalty__title">5분이 지났어요!</h2>
 
-            {timeoutTargets.length > 0 ? (
-              <>
-                <p className="timeout-message__detail">
-                  미션에 손도 대지 않은 사람에게 메시지가 전송되었어요
-                </p>
-                <div className="timeout-message__sent-list">
-                  {timeoutTargets.map((t) => (
-                    <motion.div
-                      key={t.userId}
-                      className="timeout-message__sent-item"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <span className="timeout-message__sent-name">{t.userName}</span>
-                      <span className="timeout-message__sent-badge">
-                        📩 "{t.userName}이 자고있어요~" 전송됨
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="timeout-message__no-send">
-                모두 미션을 시도했으므로 메시지는 전송되지 않았어요
+            {/* 미션 미수행자 목록 */}
+            {timeoutTargets.length > 0 && (
+              <div className="timeout-penalty__targets">
+                <p className="timeout-penalty__targets-label">아직 일어나지 않은 멤버</p>
+                {timeoutTargets.map((t) => (
+                  <motion.div
+                    key={t.userId}
+                    className="timeout-penalty__target-item"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <span className="timeout-penalty__target-name">💤 {t.name}</span>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* 벌칙 문구 */}
+            <motion.div
+              className="timeout-penalty__phrase-card"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <span className="timeout-penalty__phrase-label">📢 벌칙 문구</span>
+              <p className="timeout-penalty__phrase-text">
+                {penaltyPhrase || '벌칙 문구를 불러오는 중...'}
               </p>
+            </motion.div>
+
+            {/* 음성 녹음 영역 */}
+            <motion.div
+              className="timeout-penalty__voice"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <span className="timeout-penalty__voice-label">🎙️ 벌칙 문구를 읽어주세요</span>
+
+              {!uploadComplete ? (
+                <div className="timeout-penalty__voice-controls">
+                  {!isRecording && !recordedBlob && (
+                    <motion.button
+                      className="timeout-penalty__record-btn"
+                      onClick={startRecording}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <span className="timeout-penalty__record-dot" />
+                      녹음 시작
+                    </motion.button>
+                  )}
+
+                  {isRecording && (
+                    <motion.button
+                      className="timeout-penalty__record-btn timeout-penalty__record-btn--recording"
+                      onClick={stopRecording}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      animate={{ boxShadow: ['0 0 0 0 rgba(239,68,68,0.4)', '0 0 0 16px rgba(239,68,68,0)', '0 0 0 0 rgba(239,68,68,0.4)'] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      ⏹ 녹음 중지
+                    </motion.button>
+                  )}
+
+                  {recordedBlob && !isRecording && (
+                    <div className="timeout-penalty__voice-actions">
+                      <motion.button
+                        className="timeout-penalty__play-btn"
+                        onClick={() => {
+                          const url = URL.createObjectURL(recordedBlob);
+                          new Audio(url).play();
+                        }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        ▶ 미리듣기
+                      </motion.button>
+                      <motion.button
+                        className="timeout-penalty__upload-btn"
+                        onClick={uploadVoice}
+                        disabled={isUploading}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {isUploading ? '업로드 중...' : '📤 업로드'}
+                      </motion.button>
+                      <motion.button
+                        className="timeout-penalty__retry-btn"
+                        onClick={() => setRecordedBlob(null)}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        🔄 다시 녹음
+                      </motion.button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <motion.div
+                  className="timeout-penalty__upload-done"
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', damping: 10 }}
+                >
+                  ✅ 음성이 업로드되었어요!
+                </motion.div>
+              )}
+            </motion.div>
+
+            {/* 수신된 다른 멤버 음성 */}
+            {receivedVoices.length > 0 && (
+              <motion.div
+                className="timeout-penalty__received"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <span className="timeout-penalty__received-label">🔊 다른 멤버의 벌칙 음성</span>
+                {receivedVoices.map((v, i) => (
+                  <motion.div
+                    key={i}
+                    className="timeout-penalty__received-item"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.15 }}
+                  >
+                    <span>{v.userName}</span>
+                    <button
+                      className="timeout-penalty__play-voice"
+                      onClick={() => {
+                        const url = v.voiceUrl.startsWith('http') ? v.voiceUrl : `http://localhost:8080${v.voiceUrl}`;
+                        new Audio(url).play();
+                      }}
+                    >
+                      ▶ 재생
+                    </button>
+                  </motion.div>
+                ))}
+              </motion.div>
             )}
 
             <motion.button

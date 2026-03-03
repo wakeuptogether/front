@@ -72,13 +72,51 @@
   position: relative;
 }
 
+.signup-page__code-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-xs);
+}
+
+.signup-page__code-row > *:first-child {
+  flex: 1;
+}
+
+.signup-page__code-confirm-btn {
+  height: 52px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
 .signup-page__timer {
-  position: absolute;
-  right: 16px;
-  top: 38px; /* Adjust based on label height */
+  display: block;
+  margin-top: 6px;
+  text-align: right;
   font-size: var(--font-size-sm);
   color: #ef5350;
   font-feature-settings: "tnum";
+}
+
+.signup-page__verified-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px 16px;
+  background: rgba(76, 175, 80, 0.1);
+  color: var(--color-success);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.signup-page__error {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.08);
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  margin-bottom: var(--space-sm);
 }
 
 .signup-page__login-link {

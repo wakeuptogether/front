@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Lock, Check } from 'lucide-react';
+import { User, Mail, Lock, Check, ShieldCheck } from 'lucide-react';
 import Logo from '../components/Logo';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import { authApi } from '../services/api';
 import './SignupPage.css';
 
 export default function SignupPage() {
@@ -18,44 +19,76 @@ export default function SignupPage() {
 
   // Flow State
   const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const [timer, setTimer] = useState(180); // 3분 타이머
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // 이메일 인증코드 요청 (모의)
+  // 이메일 인증코드 요청
   const handleRequestCode = async () => {
-    if (!email) return alert('이메일을 입력해주세요.');
-    
-    // Simulate API call: POST /api/auth/send-code
-    setIsCodeSent(true);
-    setTimer(180);
-    
-    // Timer logic
-    const interval = setInterval(() => {
-      setTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    
-    alert(`인증코드가 ${email}로 발송되었습니다. (테스트용: 123456)`);
+    if (!email) return;
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await authApi.sendCode(email);
+      setIsCodeSent(true);
+      setTimer(180);
+      
+      // Timer logic
+      const interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '인증코드 전송에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // 회원가입 완료 (모의)
-  const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !email || !password || !verifyCode) return;
+  // 인증코드 검증
+  const handleVerifyCode = async () => {
+    if (!email || !verifyCode) return;
+    setError('');
+    setIsLoading(true);
 
-    if (verifyCode !== '123456') {
-      return alert('인증코드가 올바르지 않습니다.');
+    try {
+      await authApi.verifyCode(email, verifyCode);
+      setIsVerified(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '인증코드가 올바르지 않습니다.');
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    // Simulate API call: POST /api/auth/signup
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userName', name);
-    alert('회원가입이 완료되었습니다!');
-    navigate('/dashboard');
+  // 회원가입 완료
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !password || !isVerified) return;
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await authApi.signup(email, password, name);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('userId', String(response.userId));
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userName', response.name);
+      localStorage.setItem('email', response.email);
+
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '회원가입에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const minutes = Math.floor(timer / 60);
@@ -75,6 +108,16 @@ export default function SignupPage() {
           <Logo size={48} />
           <h1 className="signup-page__title">회원가입</h1>
         </div>
+
+        {error && (
+          <motion.div
+            className="signup-page__error"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {error}
+          </motion.div>
+        )}
 
         <form className="signup-page__form" onSubmit={handleSignup}>
           {/* 1. 이름 */}
@@ -104,33 +147,59 @@ export default function SignupPage() {
               size="sm"
               className="signup-page__verify-btn"
               onClick={handleRequestCode}
-              disabled={isCodeSent || !email}
+              disabled={isCodeSent || !email || isLoading}
             >
               {isCodeSent ? '전송됨' : '인증요청'}
             </Button>
           </div>
 
-          {/* 3. 인증번호 입력 (조건부 렌더링) */}
+          {/* 3. 인증번호 입력 & 검증 (조건부 렌더링) */}
           <AnimatePresence>
-            {isCodeSent && (
+            {isCodeSent && !isVerified && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 className="signup-page__code-section"
               >
-                <Input
-                  id="code"
-                  label="인증번호"
-                  placeholder="6자리 코드 입력"
-                  icon={<Check size={18} />}
-                  value={verifyCode}
-                  onChange={(e) => setVerifyCode(e.target.value)}
-                  maxLength={6}
-                />
+                <div className="signup-page__code-row">
+                  <Input
+                    id="code"
+                    label="인증번호"
+                    placeholder="6자리 코드 입력"
+                    icon={<Check size={18} />}
+                    value={verifyCode}
+                    onChange={(e) => setVerifyCode(e.target.value)}
+                    maxLength={6}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="signup-page__code-confirm-btn"
+                    onClick={handleVerifyCode}
+                    disabled={verifyCode.length < 6 || isLoading}
+                  >
+                    확인
+                  </Button>
+                </div>
                 <span className="signup-page__timer">
                   {minutes}:{String(seconds).padStart(2, '0')}
                 </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* 3-1. 검증 완료 배지 */}
+          <AnimatePresence>
+            {isVerified && (
+              <motion.div
+                className="signup-page__verified-badge"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', damping: 12 }}
+              >
+                <ShieldCheck size={18} />
+                <span>이메일 인증 완료</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -150,9 +219,9 @@ export default function SignupPage() {
             type="submit" 
             fullWidth 
             size="lg" 
-            disabled={!isCodeSent || !verifyCode || !name || !email || !password}
+            disabled={!isVerified || !name || !email || !password || isLoading}
           >
-            가입하기
+            {isLoading ? '처리 중...' : '가입하기'}
           </Button>
         </form>
 

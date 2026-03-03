@@ -136,3 +136,208 @@
   box-shadow: var(--shadow-glow-primary);
   margin-top: var(--space-md);
 }
+
+/* ===== Timeout Penalty Phase ===== */
+
+.timeout-penalty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  z-index: 1;
+  padding: var(--space-xl) var(--space-lg);
+  width: 100%;
+  max-width: 480px;
+}
+
+.timeout-penalty__icon {
+  font-size: 3.5rem;
+}
+
+.timeout-penalty__title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Targets */
+.timeout-penalty__targets {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.timeout-penalty__targets-label {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.timeout-penalty__target-item {
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(239, 68, 68, 0.12);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.timeout-penalty__target-name {
+  color: #fca5a5;
+  font-weight: 600;
+  font-size: var(--font-size-base);
+}
+
+/* Phrase Card */
+.timeout-penalty__phrase-card {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  text-align: center;
+}
+
+.timeout-penalty__phrase-label {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.5);
+  display: block;
+  margin-bottom: var(--space-sm);
+}
+
+.timeout-penalty__phrase-text {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.5;
+}
+
+/* Voice section */
+.timeout-penalty__voice {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.timeout-penalty__voice-label {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+}
+
+.timeout-penalty__voice-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.timeout-penalty__record-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 14px 32px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.timeout-penalty__record-btn--recording {
+  background: #ef4444;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.35);
+}
+
+.timeout-penalty__record-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.timeout-penalty__voice-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.timeout-penalty__play-btn,
+.timeout-penalty__upload-btn,
+.timeout-penalty__retry-btn {
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+}
+
+.timeout-penalty__play-btn {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.timeout-penalty__upload-btn {
+  background: var(--color-success);
+  box-shadow: var(--shadow-glow-success);
+}
+
+.timeout-penalty__upload-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.timeout-penalty__retry-btn {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.timeout-penalty__upload-done {
+  padding: 14px 24px;
+  background: rgba(76, 175, 80, 0.15);
+  border-radius: var(--radius-md);
+  color: var(--color-success-light);
+  font-weight: 600;
+  font-size: var(--font-size-base);
+}
+
+/* Received voices */
+.timeout-penalty__received {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.timeout-penalty__received-label {
+  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+.timeout-penalty__received-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: var(--font-size-sm);
+}
+
+.timeout-penalty__play-voice {
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(90, 158, 255, 0.2);
+  color: var(--color-primary-light);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}

@@ -1,27 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import TimePicker from '../components/TimePicker';
 import Input from '../components/Input';
 import Button from '../components/Button';
-import { alarms } from '../data/mockData';
+import { alarmApi } from '../services/api';
 import type { DayOfWeek } from '../types';
+import { toServerDays, fromServerDays } from '../types';
 import './AlarmFormPage.css';
 
 const allDays: DayOfWeek[] = ['월', '화', '수', '목', '금', '토', '일'];
 
 export default function AlarmFormPage() {
-  const { id: groupId, alarmId } = useParams<{ id: string; alarmId?: string }>();
+  const { id: groupIdStr, alarmId: alarmIdStr } = useParams<{ id: string; alarmId?: string }>();
+  const groupId = parseInt(groupIdStr || '0', 10);
+  const alarmId = alarmIdStr ? parseInt(alarmIdStr, 10) : null;
   const navigate = useNavigate();
-  const existing = alarmId ? alarms.find((a) => a.id === alarmId) : null;
 
-  const [hour, setHour] = useState(existing?.hour ?? 7);
-  const [minute, setMinute] = useState(existing?.minute ?? 0);
-  const [title, setTitle] = useState(existing?.title ?? '');
-  const [repeatDays, setRepeatDays] = useState<DayOfWeek[]>(
-    existing?.repeatDays ?? ['월', '화', '수', '목', '금']
-  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [hour, setHour] = useState(7);
+  const [minute, setMinute] = useState(0);
+  const [title, setTitle] = useState('');
+  const [repeatDays, setRepeatDays] = useState<DayOfWeek[]>(['월', '화', '수', '목', '금']);
+
+  useEffect(() => {
+    if (alarmId && groupId) {
+      // 특정 그룹의 알람 목록에서 해당 알람 찾기 (getById가 없으므로)
+      alarmApi.getByGroup(groupId).then((alarms) => {
+        const existing = alarms.find((a) => a.id === alarmId);
+        if (existing) {
+          setHour(existing.hour);
+          setMinute(existing.minute);
+          setTitle(existing.title);
+          setRepeatDays(fromServerDays(existing.repeatDays));
+        }
+      });
+    }
+  }, [alarmId, groupId]);
 
   const toggleDay = (day: DayOfWeek) => {
     setRepeatDays((prev) =>
@@ -29,10 +45,25 @@ export default function AlarmFormPage() {
     );
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock save — just navigate back
-    navigate(`/group/${groupId}`);
+    if (!groupId) return;
+    setIsLoading(true);
+
+    try {
+      const daysStr = toServerDays(repeatDays);
+      if (alarmId) {
+        await alarmApi.update(alarmId, { hour, minute, title, repeatDays: daysStr, isActive: true });
+      } else {
+        await alarmApi.create(groupId, { hour, minute, title, repeatDays: daysStr, isActive: true });
+      }
+      navigate(`/group/${groupId}`);
+    } catch (err) {
+      console.error('알람 저장 실패:', err);
+      alert('알람 저장에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,7 +80,7 @@ export default function AlarmFormPage() {
             <ArrowLeft size={22} />
           </button>
           <h1 className="alarm-form__title">
-            {existing ? '알람 수정' : '새 알람'}
+            {alarmId ? '알람 수정' : '새 알람'}
           </h1>
           <div style={{ width: 40 }} />
         </header>
@@ -108,10 +139,38 @@ export default function AlarmFormPage() {
             </div>
           </div>
 
-          {/* Save */}
-          <Button type="submit" fullWidth size="lg" icon={<Save size={20} />}>
-            저장하기
-          </Button>
+          {/* Save & Delete */}
+          <div className="alarm-form__actions">
+            {alarmId && (
+              <Button
+                type="button"
+                variant="danger"
+                fullWidth
+                size="lg"
+                icon={<Trash2 size={20} />}
+                disabled={isLoading}
+                onClick={async () => {
+                  if (window.confirm('정말로 이 알람을 삭제하시겠습니까?')) {
+                    setIsLoading(true);
+                    try {
+                      await alarmApi.delete(alarmId);
+                      navigate(`/group/${groupId}`);
+                    } catch (err) {
+                      console.error('알람 삭제 실패:', err);
+                      alert('알람 삭제에 실패했습니다.');
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }
+                }}
+              >
+                삭제하기
+              </Button>
+            )}
+            <Button type="submit" fullWidth size="lg" icon={<Save size={20} />} disabled={isLoading}>
+              {isLoading ? '저장 중...' : '저장하기'}
+            </Button>
+          </div>
         </form>
       </motion.div>
     </div>
