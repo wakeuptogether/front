@@ -1,9 +1,20 @@
 {
-  "routes": [
-    { "src": "/api/(.*)", "dest": "https://backend-ynng.onrender.com/api/$1" },
-    { "src": "/voices/(.*)", "dest": "https://backend-ynng.onrender.com/voices/$1" },
-    { "src": "/ws/(.*)", "dest": "https://backend-ynng.onrender.com/ws/$1" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://backend-ynng.onrender.com/api/$1"
+    },
+    {
+      "source": "/voices/(.*)",
+      "destination": "https://backend-ynng.onrender.com/voices/$1"
+    },
+    {
+      "source": "/ws/(.*)",
+      "destination": "https://backend-ynng.onrender.com/ws/$1"
+    },
+    {
+      "source": "/((?!api|voices|ws).*)",
+      "destination": "/index.html"
+    }
   ]
 }
