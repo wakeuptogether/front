@@ -1,19 +1,25 @@
 {
-  "rewrites": [
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
     {
       "source": "/api/(.*)",
-      "destination": "https://backend-ynng.onrender.com/api/$1"
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://backend-ynng.onrender.com/api/:path*"
     },
     {
-      "source": "/voices/(.*)",
-      "destination": "https://backend-ynng.onrender.com/voices/$1"
+      "source": "/voices/:path*",
+      "destination": "https://backend-ynng.onrender.com/voices/:path*"
     },
     {
-      "source": "/ws/(.*)",
-      "destination": "https://backend-ynng.onrender.com/ws/$1"
-    },
-    {
-      "source": "/((?!api|voices|ws).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
